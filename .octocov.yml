@@ -1,5 +1,6 @@
 ---
 
+repository: aereal/otelpubsub/${COMPONENT}
 coverage:
   if: true
 codeToTestRatio:
@@ -12,10 +13,10 @@ testExecutionTime:
   if: true
 diff:
   datastores:
-    - artifact://${GITHUB_REPOSITORY}
+    - artifact://${GITHUB_REPOSITORY}/${COMPONENT}
 report:
   datastores:
-    - artifact://${GITHUB_REPOSITORY}
+    - artifact://${GITHUB_REPOSITORY}/${COMPONENT}
 comment:
   if: is_pull_request
 summary:
