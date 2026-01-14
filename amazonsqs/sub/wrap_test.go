@@ -2,6 +2,7 @@ package sub_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/aereal/otelpubsub/amazonsqs/sub"
@@ -39,8 +40,7 @@ func testWrapper(t *testing.T, wrap func(o ...sub.StartProcessSpanOption) func(c
 	wantSpanIDHex := "1234567890abcdef"
 	entity := &sub.Message{
 		MessageAttributes: sub.MessageAttributes{
-			"otel.trace_id": sub.StringAttributeValue(wantTraceIDHex),
-			"otel.span_id":  sub.StringAttributeValue(wantSpanIDHex),
+			"traceparent": sub.StringAttributeValue(fmt.Sprintf("00-%s-%s-01", wantTraceIDHex, wantSpanIDHex)),
 		},
 	}
 	if err := wrap(sub.WithTracerProvider(tp), sub.WithStartSpanOptions(trace.WithSpanKind(trace.SpanKindClient)))(t.Context(), entity); err != nil {

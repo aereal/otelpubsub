@@ -3,6 +3,7 @@ package pub_test
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -73,8 +74,7 @@ func TestMiddleware_sendMessage(t *testing.T) {
 	}
 	t.Logf("%d message attributes", len(gotMsgAttrs))
 	wantMsgAttrs := map[string]messageAttributeValue{
-		"otel.trace_id": {DataType: utils.DataTypeString, Value: span.SpanContext().TraceID().String()},
-		"otel.span_id":  {DataType: utils.DataTypeString, Value: span.SpanContext().SpanID().String()},
+		"traceparent": {DataType: utils.DataTypeString, Value: fmt.Sprintf("00-%s-%s-01", span.SpanContext().TraceID(), span.SpanContext().SpanID())},
 	}
 	if diff := cmp.Diff(wantMsgAttrs, gotMsgAttrs); diff != "" {
 		t.Errorf("message attributes (-want, +got):\n%s", diff)
@@ -145,12 +145,10 @@ func TestMiddleware_sendMessageBatch(t *testing.T) {
 	t.Logf("%d message attributes", len(gotMsgAttrs))
 	wantMsgAttrs := map[string]map[string]messageAttributeValue{
 		"1": {
-			"otel.trace_id": {DataType: utils.DataTypeString, Value: span.SpanContext().TraceID().String()},
-			"otel.span_id":  {DataType: utils.DataTypeString, Value: span.SpanContext().SpanID().String()},
+			"traceparent": {DataType: utils.DataTypeString, Value: fmt.Sprintf("00-%s-%s-01", span.SpanContext().TraceID(), span.SpanContext().SpanID())},
 		},
 		"2": {
-			"otel.trace_id": {DataType: utils.DataTypeString, Value: span.SpanContext().TraceID().String()},
-			"otel.span_id":  {DataType: utils.DataTypeString, Value: span.SpanContext().SpanID().String()},
+			"traceparent": {DataType: utils.DataTypeString, Value: fmt.Sprintf("00-%s-%s-01", span.SpanContext().TraceID(), span.SpanContext().SpanID())},
 		},
 	}
 	if diff := cmp.Diff(wantMsgAttrs, gotMsgAttrs); diff != "" {
