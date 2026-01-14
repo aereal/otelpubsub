@@ -2,23 +2,23 @@ package sub
 
 import "fmt"
 
-// ErrInvalidAttributeType is the sentinel error for [InvalidAttributeTypeError].
-var ErrInvalidAttributeType InvalidAttributeTypeError
+// ErrInvalidAttributeKind is the sentinel error for [InvalidAttributeKindError].
+var ErrInvalidAttributeKind InvalidAttributeKindError
 
-// InvalidAttributeTypeError indicates an [AttributeKind] value is out of the valid range.
-type InvalidAttributeTypeError struct{}
+// InvalidAttributeKindError indicates an [AttributeKind] value is out of the valid range.
+type InvalidAttributeKindError struct{}
 
-var _ error = InvalidAttributeTypeError{}
+var _ error = InvalidAttributeKindError{}
 
-func (InvalidAttributeTypeError) Error() string { return "invalid AttributeType" }
+func (InvalidAttributeKindError) Error() string { return "invalid AttributeType" }
 
-// UnknownAttributeTypeError indicates an unrecognized attribute type string was encountered during unmarshaling.
-type UnknownAttributeTypeError struct {
-	AttributeType string
+// UnknownAttributeKindError indicates an unrecognized attribute type string was encountered during unmarshaling.
+type UnknownAttributeKindError struct {
+	Kind string
 }
 
-var _ error = (*UnknownAttributeTypeError)(nil) //nolint:errcheck
+var _ error = (*UnknownAttributeKindError)(nil) //nolint:errcheck
 
-func (e *UnknownAttributeTypeError) Error() string {
-	return fmt.Sprintf("unknown AttributeType: %q", e.AttributeType)
+func (e *UnknownAttributeKindError) Error() string {
+	return fmt.Sprintf("unknown attribute kind: %q", e.Kind)
 }

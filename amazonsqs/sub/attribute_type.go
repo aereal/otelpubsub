@@ -104,7 +104,7 @@ var (
 func (k AttributeKind) String() string {
 	s, ok := ak2str[k]
 	if !ok {
-		return fmt.Sprintf("INVALID.AttributeType(%d)", k)
+		return fmt.Sprintf("INVALID.AttributeKind(%d)", k)
 	}
 	return s
 }
@@ -112,7 +112,7 @@ func (k AttributeKind) String() string {
 func (k AttributeKind) MarshalText() ([]byte, error) {
 	s, ok := ak2str[k]
 	if !ok {
-		return nil, ErrInvalidAttributeType
+		return nil, ErrInvalidAttributeKind
 	}
 	return []byte(s), nil
 }
@@ -121,7 +121,7 @@ func (k *AttributeKind) UnmarshalText(b []byte) error {
 	s := string(b)
 	at, ok := str2at[s]
 	if !ok {
-		return &UnknownAttributeTypeError{AttributeType: s}
+		return &UnknownAttributeKindError{Kind: s}
 	}
 	*k = at
 	return nil
