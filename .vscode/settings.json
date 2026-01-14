@@ -1,0 +1,4 @@
+{
+  "go.buildTags": "wireinject",
+  "go.lintTool": "golangci-lint-v2",
+}

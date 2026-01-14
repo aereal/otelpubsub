@@ -1,0 +1,75 @@
+---
+name: CI
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+env:
+  AQUA_CONFIG: ${{ github.workspace }}/aqua.yaml
+  AQUA_POLICY_CONFIG: ${{ github.workspace }}/aqua-policy.yaml
+jobs:
+  ok:
+    needs:
+      - test
+    if: failure()
+    permissions: {}
+    runs-on: ubuntu-24.04
+    steps:
+      - run: exit 1
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
+        id: setup-go
+        with:
+          go-version-file: go.mod
+          cache: true
+      - run: go work init ./ ./amazonsns/ ./amazonsqs/
+      - uses: aquaproj/aqua-installer@11dd79b4e498d471a9385aa9fb7f62bb5f52a73c # v4.0.4
+        with:
+          aqua_version: v2.56.1
+      - run: aqua install
+      - name: golangci-lint
+        env:
+          _go_version: ${{ steps.setup-go.outputs.go-version }}
+        run: |
+          golangci-lint run \
+            --output.text.path stdout \
+            --output.text.print-issued-lines \
+            --issues-exit-code 0 \
+            --config ${{ github.workspace }}/.golangci.yml \
+            1>${{ github.workspace }}/lint-stdout.txt 2>/dev/stderr
+      - name: reviewdog
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ github.token }}
+        run: |
+          reviewdog \
+            -name golangci-lint \
+            -f golangci-lint \
+            -filter-mode nofilter \
+            -reporter github-pr-check \
+            -fail-level error \
+            < lint-stdout.txt
+  test:
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: read
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
+        id: setup-go
+        with:
+          cache: true
+          go-version-file: go.mod
+      - run: go work init ./ ./amazonsns/ ./amazonsqs/
+      - run: go mod download
+      - name: go test
+        run: go test -coverpkg=./... -coverprofile=./coverage.out -timeout=30s ./ ./amazonsns/... ./amazonsqs/...
+      - uses: k1LoW/octocov-action@73d561f65d59e66899ed5c87e4621a913b5d5c20 # v1.5.0
+        with:
+          version: v0.73.0
