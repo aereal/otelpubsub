@@ -67,5 +67,5 @@ func StartProcessSpan(ctx context.Context, msg *Message, opts ...StartProcessSpa
 			cfg.startSpanOptions = append(cfg.startSpanOptions, trace.WithLinks(link))
 		}
 	}
-	return cfg.tracerProvider.Tracer("github.com/aereal/amazonsqs/sub").Start(ctx, "process", cfg.startSpanOptions...)
+	return cfg.tracerProvider.Tracer("github.com/aereal/otelpubsub/amazonsqs/sub").Start(ctx, "process", cfg.startSpanOptions...)
 }
