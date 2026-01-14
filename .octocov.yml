@@ -5,10 +5,10 @@ coverage:
   if: true
 codeToTestRatio:
   code:
-    - '**/*.go'
-    - '!**/*_test.go'
+    - '${COMPONENT}/**/*.go'
+    - '!${COMPONENT}/**/*_test.go'
   test:
-    - '**/*_test.go'
+    - '${COMPONENT}/**/*_test.go'
 testExecutionTime:
   if: true
 diff:
