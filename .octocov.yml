@@ -1,22 +1,21 @@
 ---
 
-repository: aereal/otelpubsub/${COMPONENT}
 coverage:
   if: true
 codeToTestRatio:
   code:
-    - '${COMPONENT}/**/*.go'
-    - '!${COMPONENT}/**/*_test.go'
+    - '**/*.go'
+    - '!**/*_test.go'
   test:
-    - '${COMPONENT}/**/*_test.go'
+    - '**/*_test.go'
 testExecutionTime:
   if: true
 diff:
   datastores:
-    - artifact://${GITHUB_REPOSITORY}/${COMPONENT}
+    - artifact://${GITHUB_REPOSITORY}
 report:
   datastores:
-    - artifact://${GITHUB_REPOSITORY}/${COMPONENT}
+    - artifact://${GITHUB_REPOSITORY}
 comment:
   if: is_pull_request
 summary:
