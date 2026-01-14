@@ -2,14 +2,17 @@ package sub
 
 import "fmt"
 
+// ErrInvalidAttributeType is the sentinel error for [InvalidAttributeTypeError].
 var ErrInvalidAttributeType InvalidAttributeTypeError
 
+// InvalidAttributeTypeError indicates an [AttributeType] value is out of the valid range.
 type InvalidAttributeTypeError struct{}
 
 var _ error = InvalidAttributeTypeError{}
 
 func (InvalidAttributeTypeError) Error() string { return "invalid AttributeType" }
 
+// UnknownAttributeTypeError indicates an unrecognized attribute type string was encountered during JSON unmarshaling.
 type UnknownAttributeTypeError struct {
 	AttributeType string
 }

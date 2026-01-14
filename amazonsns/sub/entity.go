@@ -8,6 +8,9 @@ import (
 	"go.opentelemetry.io/otel/propagation"
 )
 
+// Entity represents an SNS notification message delivered via HTTP/S endpoints.
+// This structure matches the JSON format documented at:
+// https://docs.aws.amazon.com/sns/latest/dg/sns-message-and-json-formats.html#http-notification-json
 type Entity struct {
 	Timestamp         time.Time         `json:"Timestamp"`
 	MessageAttributes MessageAttributes `json:"MessageAttributes"`
@@ -22,6 +25,7 @@ type Entity struct {
 	Message           json.RawMessage   `json:"Message"`
 }
 
+// MessageAttributes is a map of attribute names to values, implementing [propagation.TextMapCarrier].
 type MessageAttributes map[string]AttributeValue
 
 var (

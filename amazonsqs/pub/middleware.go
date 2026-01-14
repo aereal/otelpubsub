@@ -9,6 +9,9 @@ import (
 	"github.com/aws/smithy-go/middleware"
 )
 
+// AppendMiddlewares registers a middleware that injects trace context into SQS message attributes
+// before SendMessage and SendMessageBatch API calls.
+// Pass the APIOptions field from [sqs.Options] to this function.
 func AppendMiddlewares(apiOptions *[]func(*middleware.Stack) error) {
 	*apiOptions = append(*apiOptions, func(stack *middleware.Stack) error {
 		return stack.Initialize.Add(middleware.InitializeMiddlewareFunc("InstrumentPub", instrumentPublish), middleware.Before)

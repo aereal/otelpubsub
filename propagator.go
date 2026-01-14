@@ -20,6 +20,10 @@ var (
 	fields           = []string{keyTraceID, keySpanID}
 )
 
+// Propagator propagates trace context using custom message attributes
+// "otel.trace_id" and "otel.span_id" instead of W3C Trace Context headers.
+// This format is chosen because AWS SNS/SQS message attributes do not support
+// the hyphenated header names required by W3C Trace Context (traceparent, tracestate).
 type Propagator struct{}
 
 var _ propagation.TextMapPropagator = Propagator{}

@@ -7,6 +7,7 @@ import (
 	"go.opentelemetry.io/otel/propagation"
 )
 
+// MessageAttributes is a map of attribute names to values, implementing [propagation.TextMapCarrier].
 type MessageAttributes map[string]AttributeValue
 
 var (

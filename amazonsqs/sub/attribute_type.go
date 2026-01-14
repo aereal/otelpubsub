@@ -11,16 +11,22 @@ import (
 	"github.com/aereal/iter/seq2"
 )
 
+// CustomType creates an [AttributeType] with a custom label (e.g., "String.MyCustomType").
+// SQS supports custom types for String and Binary kinds.
+// See: https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-message-metadata.html
 func CustomType(kind AttributeKind, label string) AttributeType {
 	return AttributeType{kind: kind, label: label}
 }
 
+// Predefined attribute types corresponding to SQS message attribute data types.
 var (
 	AttributeTypeString = AttributeType{kind: AttributeKindString}
 	AttributeTypeNumber = AttributeType{kind: AttributeKindNumber}
 	AttributeTypeBinary = AttributeType{kind: AttributeKindBinary}
 )
 
+// AttributeType represents the data type of an SQS message attribute.
+// Unlike SNS, SQS allows custom type labels (e.g., "String.UUID" or "Binary.png").
 type AttributeType struct {
 	label string
 	kind  AttributeKind
@@ -86,6 +92,7 @@ const (
 	AttributeKindBinary
 )
 
+// AttributeKind represents the base data type category of an SQS message attribute (String, Number, or Binary).
 type AttributeKind int
 
 var (

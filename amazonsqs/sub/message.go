@@ -2,6 +2,8 @@ package sub
 
 import "encoding/json"
 
+// Message represents an SQS message as delivered by AWS Lambda SQS event source mapping.
+// This structure matches the JSON format of records in an SQSEvent.
 type Message struct {
 	Attributes             map[string]string `json:"attributes"`
 	MessageAttributes      MessageAttributes `json:"messageAttributes"`

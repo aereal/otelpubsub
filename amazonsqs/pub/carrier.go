@@ -10,6 +10,8 @@ import (
 	"go.opentelemetry.io/otel/propagation"
 )
 
+// NewMessageAttributeCarrier wraps SQS message attributes as a [propagation.TextMapCarrier].
+// Only String-typed attributes are accessible for reading; other types are ignored.
 func NewMessageAttributeCarrier(attrs map[string]types.MessageAttributeValue) propagation.TextMapCarrier {
 	return &carrier{
 		attributes: attrs,

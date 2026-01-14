@@ -18,6 +18,8 @@ var (
 	str2at = maps.Collect(seq2.Flip(maps.All(at2str)))
 )
 
+// Attribute type constants corresponding to SNS message attribute data types.
+// See: https://docs.aws.amazon.com/sns/latest/dg/sns-message-attributes.html
 const (
 	AttributeTypeString AttributeType = iota
 	AttributeTypeStringArray
@@ -25,6 +27,7 @@ const (
 	AttributeTypeBinary
 )
 
+// AttributeType represents the data type of an SNS message attribute.
 type AttributeType int
 
 var (
