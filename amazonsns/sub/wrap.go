@@ -3,7 +3,7 @@ package sub
 import (
 	"context"
 
-	"github.com/aereal/otelpubsub/amazonsns"
+	"github.com/aereal/otelpubsub"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -52,7 +52,7 @@ func StartProcessSpan(ctx context.Context, entity *Entity, opts ...StartProcessS
 		cfg.tracerProvider = otel.GetTracerProvider()
 	}
 	if entity != nil {
-		remoteCtx := amazonsns.Propagator{}.Extract(ctx, entity.MessageAttributes)
+		remoteCtx := otelpubsub.Propagator{}.Extract(ctx, entity.MessageAttributes)
 		link := trace.LinkFromContext(remoteCtx)
 		if link.SpanContext.IsValid() {
 			cfg.startSpanOptions = append(cfg.startSpanOptions, trace.WithLinks(link))

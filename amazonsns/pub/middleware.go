@@ -3,7 +3,7 @@ package pub
 import (
 	"context"
 
-	"github.com/aereal/otelpubsub/amazonsns"
+	"github.com/aereal/otelpubsub"
 	"github.com/aws/aws-sdk-go-v2/service/sns"
 	"github.com/aws/aws-sdk-go-v2/service/sns/types"
 	"github.com/aws/smithy-go/middleware"
@@ -22,7 +22,7 @@ func instrumentPublish(ctx context.Context, input middleware.InitializeInput, ne
 		if mas == nil {
 			mas = map[string]types.MessageAttributeValue{}
 		}
-		amazonsns.Propagator{}.Inject(ctx, NewMessageAttributeCarrier(mas))
+		otelpubsub.Propagator{}.Inject(ctx, NewMessageAttributeCarrier(mas))
 		params.MessageAttributes = mas
 		input.Parameters = params
 	case *sns.PublishBatchInput:
@@ -32,7 +32,7 @@ func instrumentPublish(ctx context.Context, input middleware.InitializeInput, ne
 			if entry.MessageAttributes == nil {
 				entry.MessageAttributes = map[string]types.MessageAttributeValue{}
 			}
-			amazonsns.Propagator{}.Inject(ctx, NewMessageAttributeCarrier(entry.MessageAttributes))
+			otelpubsub.Propagator{}.Inject(ctx, NewMessageAttributeCarrier(entry.MessageAttributes))
 			entries = append(entries, entry)
 		}
 		params.PublishBatchRequestEntries = entries

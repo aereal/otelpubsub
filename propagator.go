@@ -1,4 +1,4 @@
-package amazonsqs
+package otelpubsub
 
 import (
 	"context"

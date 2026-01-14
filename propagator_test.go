@@ -1,10 +1,10 @@
-package amazonsqs_test
+package otelpubsub_test
 
 import (
 	"context"
 	"testing"
 
-	"github.com/aereal/otelpubsub/amazonsqs"
+	"github.com/aereal/otelpubsub"
 	"github.com/google/go-cmp/cmp"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/trace"
@@ -33,7 +33,7 @@ func init() {
 func TestPropagator_Fields(t *testing.T) {
 	t.Parallel()
 
-	got := amazonsqs.Propagator{}.Fields()
+	got := otelpubsub.Propagator{}.Fields()
 	want := []string{
 		"otel.trace_id",
 		"otel.span_id",
@@ -75,7 +75,7 @@ func TestPropagator_Extract(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			gotSpanContext := trace.SpanContextFromContext(amazonsqs.Propagator{}.Extract(context.Background(), tc.carrier))
+			gotSpanContext := trace.SpanContextFromContext(otelpubsub.Propagator{}.Extract(context.Background(), tc.carrier))
 			if !tc.wantSpanContext.Equal(gotSpanContext) {
 				t.Errorf("want: %#v; got: %#v", tc.wantSpanContext, gotSpanContext)
 			}
@@ -113,7 +113,7 @@ func TestPropagator_Inject(t *testing.T) {
 			t.Parallel()
 
 			m := propagation.MapCarrier{}
-			amazonsqs.Propagator{}.Inject(tc.ctx, m)
+			otelpubsub.Propagator{}.Inject(tc.ctx, m)
 			if diff := cmp.Diff(tc.want, m); diff != "" {
 				t.Errorf("carrier (-want, +got):\n%s", diff)
 			}
