@@ -5,6 +5,7 @@ import (
 
 	"github.com/aereal/otelpubsub/amazonsqs/internal"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -67,5 +68,17 @@ func StartProcessSpan(ctx context.Context, msg *Message, opts ...StartProcessSpa
 			cfg.startSpanOptions = append(cfg.startSpanOptions, trace.WithLinks(link))
 		}
 	}
-	return cfg.tracerProvider.Tracer("github.com/aereal/otelpubsub/amazonsqs/sub").Start(ctx, "process", cfg.startSpanOptions...)
+	ctx, span := cfg.tracerProvider.Tracer("github.com/aereal/otelpubsub/amazonsqs/sub").Start(ctx, "process", cfg.startSpanOptions...)
+	if msg != nil {
+		var attrs []attribute.KeyValue
+		for _, producer := range cfg.attributeProducers {
+			for kv := range producer.ProduceSQSProcessSpanAttributes(msg) {
+				attrs = append(attrs, kv)
+			}
+		}
+		if len(attrs) > 0 {
+			span.SetAttributes(attrs...)
+		}
+	}
+	return ctx, span
 }
