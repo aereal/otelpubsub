@@ -8,8 +8,9 @@ import (
 var _ = otel.GetTracerProvider
 
 type config struct {
-	tracerProvider   trace.TracerProvider
-	startSpanOptions []trace.SpanStartOption
+	tracerProvider     trace.TracerProvider
+	startSpanOptions   []trace.SpanStartOption
+	attributeProducers []SNSProcessSpanAttributeProducer
 }
 
 // StartProcessSpanOption configures [StartProcessSpan] behavior.
@@ -36,4 +37,17 @@ type optionWithStartSpanOptions struct{ opts []trace.SpanStartOption }
 
 func (o *optionWithStartSpanOptions) applyStartProcessSpanOption(c *config) {
 	c.startSpanOptions = append(c.startSpanOptions, o.opts...)
+}
+
+// WithAttributeProducers specifies [SNSProcessSpanAttributeProducer]s to produce attributes set on the span.
+func WithAttributeProducers(producers ...SNSProcessSpanAttributeProducer) StartProcessSpanOption {
+	return &optionWithAttributeProducers{producers: producers}
+}
+
+type optionWithAttributeProducers struct {
+	producers []SNSProcessSpanAttributeProducer
+}
+
+func (o *optionWithAttributeProducers) applyStartProcessSpanOption(c *config) {
+	c.attributeProducers = append(c.attributeProducers, o.producers...)
 }

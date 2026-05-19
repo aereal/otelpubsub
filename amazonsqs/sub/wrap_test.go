@@ -3,6 +3,7 @@ package sub_test
 import (
 	"context"
 	"fmt"
+	"iter"
 	"testing"
 
 	"github.com/aereal/otelpubsub/amazonsqs/sub"
@@ -15,6 +16,12 @@ import (
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 	"go.opentelemetry.io/otel/trace"
 )
+
+type producerFunc func(msg *sub.Message) iter.Seq[attribute.KeyValue]
+
+func (f producerFunc) ProduceSQSProcessSpanAttributes(msg *sub.Message) iter.Seq[attribute.KeyValue] {
+	return f(msg)
+}
 
 var (
 	dummyTraceID = trace.TraceID{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x21, 0xdc, 0x18, 0x7, 0x52, 0x47, 0x85}
@@ -106,6 +113,39 @@ func diffSpans(want, got []tracetest.SpanStub) string {
 				a.IsValid() == b.IsValid()
 		}),
 	)
+}
+
+func TestStartProcessSpan_WithAttributeProducers(t *testing.T) {
+	t.Parallel()
+
+	exporter := tracetest.NewInMemoryExporter()
+	tp := sdktrace.NewTracerProvider(sdktrace.WithSyncer(exporter))
+	msg := &sub.Message{}
+	producer := producerFunc(func(_ *sub.Message) iter.Seq[attribute.KeyValue] {
+		return func(yield func(attribute.KeyValue) bool) {
+			yield(attribute.String("test.key", "test.value"))
+		}
+	})
+
+	_, span := sub.StartProcessSpan(t.Context(), msg,
+		sub.WithTracerProvider(tp),
+		sub.WithAttributeProducers(producer),
+	)
+	span.End()
+
+	if err := tp.ForceFlush(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+
+	gotSpans := exporter.GetSpans()
+	if len(gotSpans) != 1 {
+		t.Fatalf("got %d spans, want 1", len(gotSpans))
+	}
+	wantAttrs := attribute.NewSet(attribute.String("test.key", "test.value"))
+	gotAttrs := attribute.NewSet(gotSpans[0].Attributes...)
+	if diff := cmp.Diff(wantAttrs, gotAttrs, cmp.Comparer(func(a, b attribute.Set) bool { return a.Equals(&b) })); diff != "" {
+		t.Errorf("attributes (-want, +got):\n%s", diff)
+	}
 }
 
 func processorFunc(ctx context.Context, entity *sub.Message) error { return nil }
