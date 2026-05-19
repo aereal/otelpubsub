@@ -14,8 +14,18 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/sdk/instrumentation"
+	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
+	"go.opentelemetry.io/otel/trace"
+)
+
+var (
+	dummyTraceID = trace.TraceID{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x21, 0xdc, 0x18, 0x7, 0x52, 0x47, 0x85}
+	dummySpanID  = trace.SpanID{0x0, 0x21, 0x97, 0xec, 0x5d, 0x8a, 0x25, 0xe}
 )
 
 type messageAttributeValue struct {
@@ -67,17 +77,30 @@ func TestMiddleware_sendMessage(t *testing.T) {
 	if err := tp.ForceFlush(t.Context()); err != nil {
 		t.Fatal(err)
 	}
-	gotSpans := exporter.GetSpans()
-	t.Logf("%d spans got", len(gotSpans))
-	for i, span := range gotSpans {
-		t.Logf("span: index=%d name=%s", i, span.Name)
-	}
-	t.Logf("%d message attributes", len(gotMsgAttrs))
 	wantMsgAttrs := map[string]messageAttributeValue{
 		"traceparent": {DataType: utils.DataTypeString, Value: fmt.Sprintf("00-%s-%s-01", span.SpanContext().TraceID(), span.SpanContext().SpanID())},
 	}
 	if diff := cmp.Diff(wantMsgAttrs, gotMsgAttrs); diff != "" {
 		t.Errorf("message attributes (-want, +got):\n%s", diff)
+	}
+	wantSpans := []tracetest.SpanStub{
+		{
+			Name:        "parent",
+			SpanContext: trace.NewSpanContext(trace.SpanContextConfig{TraceFlags: trace.FlagsSampled, TraceID: dummyTraceID, SpanID: dummySpanID}),
+			SpanKind:    trace.SpanKindInternal,
+			Resource: resource.NewSchemaless(
+				attribute.String("service.name", "unknown_service:pub.test"),
+				attribute.String("telemetry.sdk.language", "go"),
+				attribute.String("telemetry.sdk.name", "opentelemetry"),
+				attribute.String("telemetry.sdk.version", "1.43.0"),
+			),
+			InstrumentationScope: instrumentation.Scope{
+				Name: "test",
+			},
+		},
+	}
+	if diff := diffSpans(wantSpans, exporter.GetSpans()); diff != "" {
+		t.Errorf("spans (-want, +got):\n%s", diff)
 	}
 }
 
@@ -137,12 +160,6 @@ func TestMiddleware_sendMessageBatch(t *testing.T) {
 	if err := tp.ForceFlush(t.Context()); err != nil {
 		t.Fatal(err)
 	}
-	gotSpans := exporter.GetSpans()
-	t.Logf("%d spans got", len(gotSpans))
-	for i, span := range gotSpans {
-		t.Logf("span: index=%d name=%s", i, span.Name)
-	}
-	t.Logf("%d message attributes", len(gotMsgAttrs))
 	wantMsgAttrs := map[string]map[string]messageAttributeValue{
 		"1": {
 			"traceparent": {DataType: utils.DataTypeString, Value: fmt.Sprintf("00-%s-%s-01", span.SpanContext().TraceID(), span.SpanContext().SpanID())},
@@ -154,6 +171,48 @@ func TestMiddleware_sendMessageBatch(t *testing.T) {
 	if diff := cmp.Diff(wantMsgAttrs, gotMsgAttrs); diff != "" {
 		t.Errorf("message attributes (-want, +got):\n%s", diff)
 	}
+	wantSpans := []tracetest.SpanStub{
+		{
+			Name:        "parent",
+			SpanContext: trace.NewSpanContext(trace.SpanContextConfig{TraceFlags: trace.FlagsSampled, TraceID: dummyTraceID, SpanID: dummySpanID}),
+			SpanKind:    trace.SpanKindInternal,
+			Resource: resource.NewSchemaless(
+				attribute.String("service.name", "unknown_service:pub.test"),
+				attribute.String("telemetry.sdk.language", "go"),
+				attribute.String("telemetry.sdk.name", "opentelemetry"),
+				attribute.String("telemetry.sdk.version", "1.43.0"),
+			),
+			InstrumentationScope: instrumentation.Scope{
+				Name: "test",
+			},
+		},
+	}
+	if diff := diffSpans(wantSpans, exporter.GetSpans()); diff != "" {
+		t.Errorf("spans (-want, +got):\n%s", diff)
+	}
+}
+
+func diffSpans(want, got []tracetest.SpanStub) string {
+	return cmp.Diff(want, got,
+		cmpopts.IgnoreFields(
+			tracetest.SpanStub{},
+			"StartTime", "EndTime",
+			"InstrumentationLibrary",
+		),
+		cmp.Comparer(func(a, b attribute.Set) bool {
+			return a.Equals(&b)
+		}),
+		cmp.Comparer(func(a, b *resource.Resource) bool {
+			return a.Equal(b)
+		}),
+		cmp.Comparer(func(a, b trace.SpanContext) bool {
+			return a.HasTraceID() == b.HasTraceID() &&
+				a.HasSpanID() == b.HasSpanID() &&
+				a.IsSampled() == b.IsSampled() &&
+				a.IsRemote() == b.IsRemote() &&
+				a.IsValid() == b.IsValid()
+		}),
+	)
 }
 
 func staticCredentials(keyID, secret, sessionToken string) *awsCredentials {
