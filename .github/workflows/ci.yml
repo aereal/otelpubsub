@@ -38,6 +38,7 @@ jobs:
           aqua_version: v2.56.1
       - run: aqua install
       - name: go test
+        id: test
         background: true
         run: go test -coverpkg=./... -coverprofile=./coverage.out -timeout=30s ./ ./amazonsns/... ./amazonsqs/...
       - name: golangci-lint
@@ -59,10 +60,9 @@ jobs:
             -reporter github-pr-check \
             -fail-level error \
             < lint-stdout.txt
-      - uses: k1LoW/octocov-action@73d561f65d59e66899ed5c87e4621a913b5d5c20 # v1.5.0
-        wait:
-          - test
-        with:
-          version: v0.73.0
       - name: wait all steps
         wait-all:
+      - uses: k1LoW/octocov-action@73d561f65d59e66899ed5c87e4621a913b5d5c20 # v1.5.0
+        if: steps.test.conclusion == 'success'
+        with:
+          version: v0.73.0
